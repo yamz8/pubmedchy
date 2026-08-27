@@ -92,6 +92,11 @@ Panel {
     root.aborting = true
     root.stopRequests()
     root.query = ""
+    // The field owns the text once it has been typed in - `text: root.query`
+    // is a binding that the first keystroke breaks - so clearing the query
+    // alone leaves the panel showing a term it no longer holds, with the
+    // search button disabled because root.query is empty.
+    if (searchField) searchField.text = ""
     root.resultsQuery = ""
     root.lastSignature = ""
     root.results = []
