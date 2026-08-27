@@ -29,7 +29,16 @@ font instead of falling back to a colored emoji.
 
 Runtime dependencies are `curl` and network access to `eutils.ncbi.nlm.nih.gov`.
 
-## Install locally
+## Install
+
+```bash
+omarchy plugin add https://github.com/yamz8/pubmedchy.git --enable
+```
+
+`omarchy plugin add` clones the repository, validates the manifest, and installs
+it as `yamz8.pubmedchy`. Update later with `omarchy plugin update yamz8.pubmedchy`.
+
+## Install from a local checkout
 
 ```bash
 cp -R ./pubmedchy ~/.config/omarchy/plugins/yamz8.pubmedchy
@@ -42,6 +51,17 @@ Plugin files hot reload. If the widget does not appear immediately, run:
 ```bash
 omarchy-shell shell rescanPlugins
 ```
+
+## Remove
+
+```bash
+omarchy plugin disable yamz8.pubmedchy
+omarchy plugin remove yamz8.pubmedchy
+```
+
+Removing the plugin takes the widget out of the bar and deletes
+`~/.config/omarchy/plugins/yamz8.pubmedchy`. The plugin stores nothing outside
+that folder, so nothing else is left behind.
 
 ## Use
 
