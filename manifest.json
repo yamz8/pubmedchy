@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "yamz8.pubmedchy",
+  "name": "pubmedchy",
+  "version": "1.0.0",
+  "author": "yamz8",
+  "license": "MIT",
+  "description": "Search the PubMed biomedical literature from the Omarchy bar",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Pubmedchy.qml"
+  },
+  "barWidget": {
+    "displayName": "pubmedchy",
+    "description": "Search PubMed citations by topic, author, journal, or PMID",
+    "category": "Science",
+    "defaultSection": "right",
+    "allowMultiple": false,
+    "defaults": {
+      "defaultDate": "any",
+      "defaultType": "ALL",
+      "sortOrder": "relevance",
+      "resultLimit": 6
+    },
+    "schema": [
+      {
+        "key": "defaultDate",
+        "type": "enum",
+        "label": "Default publication window",
+        "options": [
+          "any",
+          "1y",
+          "5y",
+          "10y"
+        ],
+        "defaultValue": "any"
+      },
+      {
+        "key": "defaultType",
+        "type": "enum",
+        "label": "Default article type",
+        "options": [
+          "ALL",
+          "REVIEW",
+          "TRIAL",
+          "META"
+        ],
+        "defaultValue": "ALL"
+      },
+      {
+        "key": "sortOrder",
+        "type": "enum",
+        "label": "Result order",
+        "options": [
+          "relevance",
+          "pub_date"
+        ],
+        "defaultValue": "relevance"
+      },
+      {
+        "key": "resultLimit",
+        "type": "integer",
+        "label": "Results shown",
+        "min": 5,
+        "max": 10,
+        "step": 1,
+        "defaultValue": 6
+      }
+    ]
+  }
+}
