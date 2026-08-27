@@ -32,7 +32,7 @@ Runtime dependencies are `curl` and network access to `eutils.ncbi.nlm.nih.gov`.
 ## Install locally
 
 ```bash
-cp -R ./omarchy-pubmedchy ~/.config/omarchy/plugins/yamz8.pubmedchy
+cp -R ./pubmedchy ~/.config/omarchy/plugins/yamz8.pubmedchy
 omarchy plugin validate ~/.config/omarchy/plugins/yamz8.pubmedchy
 omarchy plugin enable yamz8.pubmedchy
 ```
