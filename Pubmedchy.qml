@@ -20,6 +20,12 @@ Panel {
   // built-in widgets. No other bar widget uses a book, which keeps it
   // distinguishable from the neighbouring search-style marks.
   readonly property string pubmedIcon: "󰗚"
+  // Hard ceiling on how much of an NCBI response the shell will ever hold.
+  // Two stages of ten records run well under 100 KB, so 2 MiB leaves ample
+  // headroom while keeping a hostile or hijacked endpoint from growing the
+  // shell process without bound. Enforced outside the shell, in the fetch
+  // pipeline, and re-checked here before anything is parsed.
+  readonly property int maxResponseBytes: 2 * 1024 * 1024
   readonly property int resultLimit: PubMed.clampResultLimit(setting("resultLimit", 6))
   readonly property string sortOrder: PubMed.sortKey(setting("sortOrder", "relevance"))
   readonly property int resultRowHeight: Style.space(84)
@@ -104,6 +110,34 @@ Panel {
     root.errorText = message
   }
 
+  // curl is capped twice over. --max-filesize stops the transfer at the limit
+  // even when the endpoint declares no Content-Length, and the head -c stage
+  // holds the same bound on curl builds that only honour a declared length.
+  // pipefail keeps curl's own status as the pipeline status, so timeouts and
+  // transport failures still reach onExited unchanged. The URL is passed as a
+  // positional argument and after --, never spliced into the script text.
+  function fetchCommand(url) {
+    return [
+      "bash",
+      "-c",
+      "set -o pipefail; "
+        + "curl -fsS --max-time 12 --connect-timeout 5 "
+        + "--max-filesize " + root.maxResponseBytes + " "
+        + "--user-agent pubmedchy/1.0 -- \"$1\" "
+        + "| head -c " + root.maxResponseBytes,
+      "pubmedchy",
+      url
+    ]
+  }
+
+  // A response that reaches the cap was truncated mid-flight and cannot be
+  // valid JSON, so it is refused before any parser sees it.
+  function refuseOversized(raw) {
+    if (raw.length < root.maxResponseBytes) return false
+    root.failWith("PubMed returned an oversized response — narrow the search and retry")
+    return true
+  }
+
   function runSearch() {
     var url = PubMed.buildSearchUrl(root.query, root.dateFilter, root.typeFilter,
                                     root.sortOrder, root.resultLimit)
@@ -122,20 +156,14 @@ Panel {
     root.selectedIndex = 0
     root.resultsQuery = root.query.trim()
     root.lastSignature = root.searchSignature()
-    searchProcess.command = [
-      "curl",
-      "-fsS",
-      "--max-time", "12",
-      "--connect-timeout", "5",
-      "--user-agent", "pubmedchy/1.0",
-      url
-    ]
+    searchProcess.command = root.fetchCommand(url)
     searchProcess.running = true
   }
 
   // Stage one: esearch returns the ranked id list and the total match count.
   function applySearch(raw) {
     if (!root.opened || root.aborting) return
+    if (root.refuseOversized(raw)) return
     var parsed
     try {
       parsed = PubMed.parseSearchResponse(raw)
@@ -160,20 +188,14 @@ Panel {
     }
 
     root.pendingIds = parsed.ids
-    summaryProcess.command = [
-      "curl",
-      "-fsS",
-      "--max-time", "12",
-      "--connect-timeout", "5",
-      "--user-agent", "pubmedchy/1.0",
-      summaryUrl
-    ]
+    summaryProcess.command = root.fetchCommand(summaryUrl)
     summaryProcess.running = true
   }
 
   // Stage two: esummary fills in the citation details for those ids.
   function applySummaries(raw) {
     if (!root.opened || root.aborting) return
+    if (root.refuseOversized(raw)) return
     try {
       var articles = PubMed.parseSummaryResponse(raw, root.pendingIds)
       root.results = articles
@@ -190,9 +212,13 @@ Panel {
   }
 
   function networkError(exitCode) {
-    return exitCode === 28
-      ? "PubMed timed out — check the connection and retry"
-      : "PubMed is unavailable — check the connection and retry"
+    // 28 is curl's timeout. 63 is --max-filesize, 23 is curl failing to write
+    // once head -c has closed the pipe, and 141 is that same stage seen as
+    // SIGPIPE — all three mean the response outgrew the cap.
+    if (exitCode === 28) return "PubMed timed out — check the connection and retry"
+    if (exitCode === 63 || exitCode === 23 || exitCode === 141)
+      return "PubMed returned an oversized response — narrow the search and retry"
+    return "PubMed is unavailable — check the connection and retry"
   }
 
   function refreshAfterFilterChange() {
