@@ -171,7 +171,7 @@ Panel {
     if (root.refuseOversized(raw)) return
     var parsed
     try {
-      parsed = PubMed.parseSearchResponse(raw)
+      parsed = PubMed.parseSearchResponse(raw, root.resultLimit)
     } catch (error) {
       root.failWith("PubMed returned an unreadable response — retry shortly")
       return
@@ -186,7 +186,7 @@ Panel {
       return
     }
 
-    var summaryUrl = PubMed.buildSummaryUrl(parsed.ids)
+    var summaryUrl = PubMed.buildSummaryUrl(parsed.ids, root.resultLimit)
     if (!summaryUrl) {
       root.failWith("PubMed returned an unreadable response — retry shortly")
       return
@@ -202,7 +202,7 @@ Panel {
     if (!root.opened || root.aborting) return
     if (root.refuseOversized(raw)) return
     try {
-      var articles = PubMed.parseSummaryResponse(raw, root.pendingIds)
+      var articles = PubMed.parseSummaryResponse(raw, root.pendingIds, root.resultLimit)
       root.results = articles
       root.selectedIndex = 0
       root.errorText = articles.length === 0

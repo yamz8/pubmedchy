@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "yamz8.pubmedchy",
   "name": "pubmedchy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "yamz8",
   "license": "MIT",
   "description": "Search the PubMed biomedical literature from the Omarchy bar",
