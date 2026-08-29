@@ -354,7 +354,6 @@ Panel {
         width: parent.width
         title: "pubmedchy"
         meta: "NCBI PubMed citation index"
-        detail: "LIVE"
         foreground: root.foreground
         fontFamily: root.fontFamily
 
